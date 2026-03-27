@@ -1,0 +1,15 @@
+<svg width="1024" height="1024" viewBox="0 0 680 680" xmlns="http://www.w3.org/2000/svg">
+  <rect width="680" height="680" fill="#0D1B2A"/>
+  <ellipse cx="340" cy="480" rx="320" ry="60" fill="#1B2D3F" opacity="0.8"/>
+  <path d="M20 460 Q120 400 220 445 Q320 490 420 440 Q520 390 660 450 L660 560 Q520 500 420 550 Q320 600 220 550 Q120 500 20 560 Z" fill="#1B2D3F"/>
+  <path d="M20 490 Q100 440 200 470 Q300 500 400 460 Q500 420 660 475 L660 580 Q500 525 400 565 Q300 605 200 575 Q100 545 20 590 Z" fill="#243447"/>
+  <path d="M20 530 Q80 495 160 510 Q260 530 360 500 Q460 470 560 505 Q620 520 660 510 L660 620 Q620 610 560 595 Q460 560 360 590 Q260 620 160 600 Q80 585 20 610 Z" fill="#C9A96E" opacity="0.15"/>
+  <path d="M60 510 Q120 490 180 505 Q240 520 300 498 Q360 476 420 492 Q480 508 540 492 Q600 476 640 488" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
+  <text x="340" y="310" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="110" font-weight="900" fill="#C9A96E" letter-spacing="6">SWELL</text>
+  <text x="340" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="400" fill="#A8B8C8" letter-spacing="8">SURF TRACKER</text>
+  <line x1="240" y1="378" x2="440" y2="378" stroke="#C9A96E" stroke-width="1" opacity="0.5"/>
+  <circle cx="200" cy="195" r="3" fill="#38bdf8" opacity="0.4"/>
+  <circle cx="220" cy="185" r="2" fill="#38bdf8" opacity="0.3"/>
+  <circle cx="460" cy="195" r="3" fill="#38bdf8" opacity="0.4"/>
+  <circle cx="480" cy="185" r="2" fill="#38bdf8" opacity="0.3"/>
+</svg>

@@ -1,8 +1,13 @@
-import { Ionicons } from '@expo/vector-icons'
 import { Tabs } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
+import { useAuth } from '@clerk/clerk-expo'
 import { C } from '../../lib/theme'
 
 export default function TabLayout() {
+  const { isLoaded } = useAuth()
+
+  if (!isLoaded) return null
+
   return (
     <Tabs
       screenOptions={{

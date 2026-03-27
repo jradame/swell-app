@@ -1,18 +1,18 @@
-import { useAuth } from '@clerk/clerk-expo'
-import { useFocusEffect } from 'expo-router'
-import { useCallback, useEffect, useState } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { useState, useEffect, useCallback } from 'react'
+import { View, Text, ScrollView, StyleSheet, Pressable, TouchableOpacity } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { fetchConditions, getSessions } from '../../lib/api'
-import { REGIONS, SPOTS } from '../../lib/spots'
+import { useAuth, useClerk } from '@clerk/clerk-expo'
+import { useFocusEffect } from 'expo-router'
 import { C, R } from '../../lib/theme'
+import { SPOTS, REGIONS } from '../../lib/spots'
+import { getSessions, fetchConditions } from '../../lib/api'
 
 function QualityBadge({ label }) {
   const colors = {
     Clean: { bg: C.greenDim, color: C.green },
-    Fair: { bg: C.amberDim, color: C.amber },
-    Blown: { bg: C.redDim, color: C.red },
-    Flat: { bg: C.primaryDim, color: C.primary },
+    Fair:  { bg: C.amberDim, color: C.amber },
+    Blown: { bg: C.redDim,   color: C.red   },
+    Flat:  { bg: C.primaryDim, color: C.primary },
   }
   const c = colors[label] || colors.Fair
   return (
@@ -25,7 +25,7 @@ function QualityBadge({ label }) {
 function StarRating({ rating = 0 }) {
   return (
     <View style={{ flexDirection: 'row', gap: 2 }}>
-      {[1, 2, 3, 4, 5].map(n => (
+      {[1,2,3,4,5].map(n => (
         <Text key={n} style={{ color: n <= rating ? C.amber : C.textMuted, fontSize: 10 }}>★</Text>
       ))}
     </View>
@@ -34,6 +34,7 @@ function StarRating({ rating = 0 }) {
 
 export default function HomeScreen() {
   const { getToken } = useAuth()
+  const { signOut } = useClerk()
   const [selectedRegion, setSelectedRegion] = useState('West Coast')
   const [selectedSpotId, setSelectedSpotId] = useState('trestles')
   const [conditions, setConditions] = useState(null)
@@ -97,7 +98,12 @@ export default function HomeScreen() {
             <Text style={s.greeting}>{greeting}</Text>
             <Text style={s.dayName} numberOfLines={1} adjustsFontSizeToFit>{dayName}</Text>
           </View>
-          <Text style={s.dateStr}>{dateStr}</Text>
+          <View style={{ alignItems: 'flex-end', gap: 6 }}>
+            <Text style={s.dateStr}>{dateStr}</Text>
+            <TouchableOpacity onPress={() => signOut()}>
+              <Text style={{ fontFamily: 'DMSans_400Regular', fontSize: 11, color: C.textMuted }}>Sign out</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={s.card}>
@@ -125,8 +131,8 @@ export default function HomeScreen() {
           <View style={s.condRow}>
             {[
               { val: condLoading ? '—' : condError ? '—' : `${conditions?.waveHeight}`, unit: 'ft', label: 'Wave height' },
-              { val: condLoading ? '—' : condError ? '—' : `${conditions?.period}`, unit: 's', label: 'Period' },
-              { val: condLoading ? '—' : condError ? '—' : `${conditions?.wind}`, unit: 'kt', label: 'Wind' },
+              { val: condLoading ? '—' : condError ? '—' : `${conditions?.period}`,     unit: 's',  label: 'Period'      },
+              { val: condLoading ? '—' : condError ? '—' : `${conditions?.wind}`,       unit: 'kt', label: 'Wind'        },
             ].map((c, i) => (
               <View key={i} style={[s.condCell, i < 2 && s.condCellBorder]}>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center' }}>
@@ -196,7 +202,7 @@ const s = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
   greeting: { fontFamily: 'DMSans_400Regular', fontSize: 12, color: C.textMuted, marginBottom: 2 },
   dayName: { fontFamily: 'Syne_800ExtraBold', fontSize: 22, color: C.gold, lineHeight: 26 },
-  dateStr: { fontFamily: 'Syne_700Bold', fontSize: 10, color: C.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5, paddingTop: 6, flexShrink: 1, textAlign: 'right', marginLeft: 8 },
+  dateStr: { fontFamily: 'Syne_700Bold', fontSize: 10, color: C.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5, flexShrink: 1, textAlign: 'right' },
   card: { backgroundColor: C.card, borderRadius: R.lg, borderWidth: 0.5, borderColor: C.borderMid, marginBottom: 12, overflow: 'hidden' },
   badge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20 },
   badgeText: { fontFamily: 'DMSans_500Medium', fontSize: 11 },
