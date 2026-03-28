@@ -1,50 +1,132 @@
-# Welcome to your Expo app 👋
+# Swell — Surf Session Tracker
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A mobile-first surf session tracker built with React Native and Expo. Connects to the Swell V3 backend (Next.js, Neon PostgreSQL, Clerk) via Bearer token auth. Runs on iOS and Android through Expo Go during development, with EAS Build configured for App Store and Google Play submission.
 
-## Get started
+Live web version: [swell-v3-bice.vercel.app](https://swell-v3-bice.vercel.app)
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## What it does
 
-2. Start the app
+Swell lets surfers log sessions, track wave height and duration, rate conditions with a 1-5 star system, and view progress over time. The home screen pulls live swell data from the Open-Meteo Marine and Weather APIs for any of 29 spots across Hawaii, West Coast, Gulf Coast, East Coast, Puerto Rico, and International regions.
 
-   ```bash
-   npx expo start
-   ```
+Sessions are stored in a real PostgreSQL database and sync across the web app and native app using the same user account.
 
-In the output, you'll find options to open the app in a
+---
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Stack
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- React Native with Expo SDK 54
+- Expo Router for file-based navigation
+- Clerk Expo SDK for authentication
+- Expo SecureStore for token caching
+- Open-Meteo Marine + Weather API for live conditions
+- Swell V3 API (Next.js + Neon PostgreSQL + Prisma) for session data
+- EAS Build configured for App Store and Google Play
 
-## Get a fresh project
+---
 
-When you're ready, run:
+## Screens
 
-```bash
-npm run reset-project
+**Home** — Time-of-day greeting, region tabs, spot selector, live conditions widget (wave height, period, wind speed, quality badge), stat cards, and recent sessions list.
+
+**Log** — Region and spot selector, date picker, wave height, duration, board type, star rating, and notes. Save is disabled until required fields are filled.
+
+**History** — Full session list with filter chips (All, This Month, Best Rated, Biggest Waves), color-coded rating pills, delete with confirmation modal.
+
+**Progress** — Session streak, total sessions, average wave height, monthly bar chart, and top spots ranked by session count.
+
+---
+
+## Design system
+
+The native app shares the same gold/blue design language as V3.
+
+- Background: `#0D1B2A`
+- Card surface: `#1B2D3F`
+- Gold (brand): `#C9A96E`
+- Blue (data): `#38bdf8`
+- Typography: Syne (headings), DM Sans (body)
+
+---
+
+## Project structure
+
+```
+app/
+  _layout.jsx          ClerkProvider root, font loading, auth gate
+  (auth)/
+    sign-in.jsx        Email + verification code flow
+    sign-up.jsx        Create account flow
+  (tabs)/
+    _layout.jsx        Tab bar with Ionicons
+    index.jsx          Home screen
+    log.jsx            Log session screen
+    history.jsx        Session history screen
+    progress.jsx       Progress and stats screen
+lib/
+  api.js               All API calls to V3 backend
+  spots.js             29 surf spots with regions and coordinates
+  theme.js             Design tokens
+assets/
+  images/
+    icon.png           App icon (1024x1024)
+    splash-icon.png    Splash screen image
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
+## Getting started
 
-To learn more about developing your project with Expo, look at the following resources:
+Clone the repo and install dependencies:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+git clone https://github.com/jradame/swell-native.git
+cd swell-native
+npm install
+```
 
-## Join the community
+Start the development server:
 
-Join our community of developers creating universal apps.
+```bash
+npx expo start
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Scan the QR code with Expo Go on your phone. The app connects to the live V3 API at swell-v3-bice.vercel.app by default.
+
+---
+
+## Auth
+
+Authentication is handled by Clerk. The native app uses the Clerk Expo SDK with SecureStore token caching. On sign-in, a JWT is stored and passed as a Bearer token on every API request to the V3 backend.
+
+The V3 API routes accept both Clerk session cookies (web) and Bearer tokens (native) so both apps write to the same database.
+
+---
+
+## Building for production
+
+EAS Build is configured and linked to the Expo project. Requires an Apple Developer account ($99/year) for iOS App Store submission.
+
+```bash
+eas build --platform ios
+eas build --platform android
+```
+
+After a successful build:
+
+```bash
+eas submit --platform ios
+eas submit --platform android
+```
+
+---
+
+## Related
+
+- Swell V3 web app: [github.com/jradame/swell-v3](https://github.com/jradame/swell-v3)
+- Portfolio: [justinadame.com](https://justinadame.com)
+
+---
+
+Built by Justin Adame — UX Designer and Frontend Developer based in Austin, TX.
