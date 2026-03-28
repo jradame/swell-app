@@ -1,4 +1,4 @@
-# Swell — Surf Session Tracker
+# Swell - Surf Session Tracker
 
 A mobile-first surf session tracker built with React Native and Expo. Connects to the Swell V3 backend (Next.js, Neon PostgreSQL, Clerk) via Bearer token auth. Runs on iOS and Android through Expo Go during development, with EAS Build configured for App Store and Google Play submission.
 
@@ -28,13 +28,13 @@ Sessions are stored in a real PostgreSQL database and sync across the web app an
 
 ## Screens
 
-**Home** — Time-of-day greeting, region tabs, spot selector, live conditions widget (wave height, period, wind speed, quality badge), stat cards, and recent sessions list.
+**Home** - Time-of-day greeting, region tabs, spot selector, live conditions widget (wave height, period, wind speed, quality badge), stat cards, and recent sessions list.
 
-**Log** — Region and spot selector, date picker, wave height, duration, board type, star rating, and notes. Save is disabled until required fields are filled.
+**Log** - Region and spot selector, date picker, wave height, duration, board type, star rating, and notes. Save is disabled until required fields are filled.
 
-**History** — Full session list with filter chips (All, This Month, Best Rated, Biggest Waves), color-coded rating pills, delete with confirmation modal.
+**History** - Full session list with filter chips (All, This Month, Best Rated, Biggest Waves), color-coded rating pills, delete with confirmation modal.
 
-**Progress** — Session streak, total sessions, average wave height, monthly bar chart, and top spots ranked by session count.
+**Progress** - Session streak, total sessions, average wave height, monthly bar chart, and top spots ranked by session count.
 
 ---
 
@@ -129,4 +129,4 @@ eas submit --platform android
 
 ---
 
-Built by Justin Adame — UX Designer and Frontend Developer based in Austin, TX.
+Built by Justin Adame - UX Designer and Frontend Developer based in Austin, TX.
