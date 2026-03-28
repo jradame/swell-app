@@ -2,6 +2,7 @@ import { useAuth } from '@clerk/clerk-expo'
 import { useFocusEffect } from 'expo-router'
 import { useCallback, useState } from 'react'
 import { ScrollView, StyleSheet, Text, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { getSessions } from '../../lib/api'
 import { C, R } from '../../lib/theme'
 
@@ -84,81 +85,79 @@ export default function ProgressScreen() {
   const maxMonthly = Math.max(...monthlyData.map(m => m.count), 1)
 
   return (
-    <ScrollView style={s.screen} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
-      <Text style={s.pageTitle}>PROGRESS</Text>
-      <Text style={s.pageSub}>{now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
+      <ScrollView style={s.screen} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+        <Text style={s.pageTitle}>PROGRESS</Text>
+        <Text style={s.pageSub}>{now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</Text>
 
-      {loading ? (
-        <Text style={s.empty}>Loading...</Text>
-      ) : sessions.length === 0 ? (
-        <View style={s.emptyCard}>
-          <Text style={s.empty}>Log some sessions to see your progress</Text>
-        </View>
-      ) : (
-        <>
-          {/* Streak */}
-          <View style={[s.card, { flexDirection: 'row', alignItems: 'center', gap: 16, padding: 20 }]}>
-            <Text style={[s.streakNum, { color: streak > 0 ? C.primary : C.textMuted }]}>{streak}</Text>
-            <View>
-              <Text style={s.streakLabel}>Day streak</Text>
-              <Text style={s.streakSub}>{streak > 0 ? 'Keep it going' : 'Log a session to start'}</Text>
+        {loading ? (
+          <Text style={s.empty}>Loading...</Text>
+        ) : sessions.length === 0 ? (
+          <View style={s.emptyCard}>
+            <Text style={s.empty}>Log some sessions to see your progress</Text>
+          </View>
+        ) : (
+          <>
+            <View style={[s.card, { flexDirection: 'row', alignItems: 'center', gap: 16, padding: 20 }]}>
+              <Text style={[s.streakNum, { color: streak > 0 ? C.primary : C.textMuted }]}>{streak}</Text>
+              <View>
+                <Text style={s.streakLabel}>Day streak</Text>
+                <Text style={s.streakSub}>{streak > 0 ? 'Keep it going' : 'Log a session to start'}</Text>
+              </View>
             </View>
-          </View>
 
-          {/* Stat grid */}
-          <View style={s.statGrid}>
-            <StatCard label="Sessions total" value={String(sessions.length)} sub={`${thisMonthSessions.length} this month`} />
-            <StatCard label="Avg rating" value={avgRating} sub="out of 5" accent={C.amber} />
-            <StatCard label="Avg wave" value={avgWave !== '--' ? `${avgWave} ft` : '--'} sub={maxWave !== '--' ? `Best: ${maxWave} ft` : ''} accent={C.primary} />
-            <StatCard label="Time in water" value={totalHours !== '--' ? `${totalHours}h` : '--'} sub={`${totalMinutes} min total`} />
-          </View>
-
-          {/* Monthly bar chart */}
-          <View style={s.card}>
-            <Text style={s.chartTitle}>SESSIONS BY MONTH</Text>
-            <View style={s.barChart}>
-              {monthlyData.map((m, i) => (
-                <View key={i} style={s.barCol}>
-                  <Text style={s.barCount}>{m.count > 0 ? m.count : ''}</Text>
-                  <View style={s.barTrack}>
-                    <View style={[s.bar, {
-                      height: m.count > 0 ? Math.max((m.count / maxMonthly) * 60, 6) : 4,
-                      backgroundColor: i === 3 ? C.primary : C.primaryDim,
-                    }]} />
-                  </View>
-                  <Text style={s.barLabel}>{m.label}</Text>
-                </View>
-              ))}
+            <View style={s.statGrid}>
+              <StatCard label="Sessions total" value={String(sessions.length)} sub={`${thisMonthSessions.length} this month`} />
+              <StatCard label="Avg rating" value={avgRating} sub="out of 5" accent={C.amber} />
+              <StatCard label="Avg wave" value={avgWave !== '--' ? `${avgWave} ft` : '--'} sub={maxWave !== '--' ? `Best: ${maxWave} ft` : ''} accent={C.primary} />
+              <StatCard label="Time in water" value={totalHours !== '--' ? `${totalHours}h` : '--'} sub={`${totalMinutes} min total`} />
             </View>
-          </View>
 
-          {/* Top spots */}
-          {topSpots.length > 0 && (
             <View style={s.card}>
-              <Text style={s.chartTitle}>TOP SPOTS</Text>
-              {topSpots.map(([spot, count]) => (
-                <View key={spot} style={s.spotRow}>
-                  <View style={s.spotInfo}>
-                    <Text style={s.spotName}>{spot}</Text>
-                    <Text style={s.spotCount}>{count} session{count !== 1 ? 's' : ''}</Text>
+              <Text style={s.chartTitle}>SESSIONS BY MONTH</Text>
+              <View style={s.barChart}>
+                {monthlyData.map((m, i) => (
+                  <View key={i} style={s.barCol}>
+                    <Text style={s.barCount}>{m.count > 0 ? m.count : ''}</Text>
+                    <View style={s.barTrack}>
+                      <View style={[s.bar, {
+                        height: m.count > 0 ? Math.max((m.count / maxMonthly) * 60, 6) : 4,
+                        backgroundColor: i === 3 ? C.primary : C.primaryDim,
+                      }]} />
+                    </View>
+                    <Text style={s.barLabel}>{m.label}</Text>
                   </View>
-                  <View style={s.barTrackH}>
-                    <View style={[s.barH, { width: `${(count / maxCount) * 100}%` }]} />
-                  </View>
-                </View>
-              ))}
+                ))}
+              </View>
             </View>
-          )}
-        </>
-      )}
-    </ScrollView>
+
+            {topSpots.length > 0 && (
+              <View style={s.card}>
+                <Text style={s.chartTitle}>TOP SPOTS</Text>
+                {topSpots.map(([spot, count]) => (
+                  <View key={spot} style={s.spotRow}>
+                    <View style={s.spotInfo}>
+                      <Text style={s.spotName}>{spot}</Text>
+                      <Text style={s.spotCount}>{count} session{count !== 1 ? 's' : ''}</Text>
+                    </View>
+                    <View style={s.barTrackH}>
+                      <View style={[s.barH, { width: `${(count / maxCount) * 100}%` }]} />
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+          </>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   )
 }
 
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
   content: { padding: 20, paddingBottom: 40 },
-  pageTitle: { fontFamily: 'Syne_800ExtraBold', fontSize: 32, color: C.gold },
+  pageTitle: { fontFamily: 'Syne_800ExtraBold', fontSize: 22, color: C.gold },
   pageSub: { fontFamily: 'DMSans_400Regular', fontSize: 13, color: C.textMuted, marginBottom: 20 },
   card: { backgroundColor: C.card, borderRadius: R.lg, borderWidth: 0.5, borderColor: C.border, marginBottom: 12, overflow: 'hidden', padding: 16 },
   streakNum: { fontFamily: 'Syne_800ExtraBold', fontSize: 56, lineHeight: 60 },

@@ -2,6 +2,7 @@ import { useAuth } from '@clerk/clerk-expo'
 import { useFocusEffect } from 'expo-router'
 import { useCallback, useState } from 'react'
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { deleteSession, getSessions } from '../../lib/api'
 import { C, R } from '../../lib/theme'
 
@@ -80,84 +81,82 @@ export default function HistoryScreen() {
   const ratingColor = (r) => { const n = parseInt(r) || 0; return n >= 4 ? 'green' : n >= 3 ? 'amber' : 'primary' }
 
   return (
-    <View style={s.screen}>
-      <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
+      <View style={s.screen}>
+        <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
 
-        {/* Header */}
-        <View style={s.header}>
-          <View>
-            <Text style={s.pageTitle}>HISTORY</Text>
-            <Text style={s.pageSub}>{sessions.length} session{sessions.length !== 1 ? 's' : ''} logged</Text>
+          <View style={s.header}>
+            <View>
+              <Text style={s.pageTitle}>HISTORY</Text>
+              <Text style={s.pageSub}>{sessions.length} session{sessions.length !== 1 ? 's' : ''} logged</Text>
+            </View>
           </View>
-        </View>
 
-        {/* Filter chips */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filterScroll}>
-          <View style={s.filterRow}>
-            {FILTERS.map(f => (
-              <Pressable key={f} onPress={() => setFilter(f)} style={[s.filterChip, filter === f && s.filterChipActive]}>
-                <Text style={[s.filterText, filter === f && s.filterTextActive]}>{f}</Text>
-              </Pressable>
-            ))}
-          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filterScroll}>
+            <View style={s.filterRow}>
+              {FILTERS.map(f => (
+                <Pressable key={f} onPress={() => setFilter(f)} style={[s.filterChip, filter === f && s.filterChipActive]}>
+                  <Text style={[s.filterText, filter === f && s.filterTextActive]}>{f}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </ScrollView>
+
+          {loading ? (
+            <Text style={s.empty}>Loading...</Text>
+          ) : filtered.length === 0 ? (
+            <View style={s.emptyCard}>
+              <Text style={s.empty}>{sessions.length === 0 ? 'No sessions yet' : 'No sessions match this filter'}</Text>
+            </View>
+          ) : (
+            filtered.map(session => (
+              <View key={session.id} style={s.card}>
+                <View style={s.cardTop}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.spot}>{session.spot}</Text>
+                    <Text style={s.meta}>{formatDate(session.date)}</Text>
+                  </View>
+                  <View style={{ alignItems: 'flex-end', gap: 6 }}>
+                    <StarRating rating={parseInt(session.rating) || 0} />
+                    <TouchableOpacity onPress={() => setDeleteId(session.id)}>
+                      <Text style={{ color: C.red, fontSize: 12, fontFamily: 'DMSans_400Regular' }}>Delete</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+                <View style={s.pillRow}>
+                  <Pill>{session.waveHeight} ft</Pill>
+                  <Pill>{session.duration} min</Pill>
+                  {session.rating > 0 && <Pill color={ratingColor(session.rating)}>{session.rating}/5</Pill>}
+                  {session.board && <Pill>{session.board}</Pill>}
+                </View>
+                {session.notes ? (
+                  <View style={s.notes}>
+                    <Text style={s.notesText}>{session.notes}</Text>
+                  </View>
+                ) : null}
+              </View>
+            ))
+          )}
         </ScrollView>
 
-        {/* Sessions */}
-        {loading ? (
-          <Text style={s.empty}>Loading...</Text>
-        ) : filtered.length === 0 ? (
-          <View style={s.emptyCard}>
-            <Text style={s.empty}>{sessions.length === 0 ? 'No sessions yet' : 'No sessions match this filter'}</Text>
-          </View>
-        ) : (
-          filtered.map(session => (
-            <View key={session.id} style={s.card}>
-              <View style={s.cardTop}>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.spot}>{session.spot}</Text>
-                  <Text style={s.meta}>{formatDate(session.date)}</Text>
-                </View>
-                <View style={{ alignItems: 'flex-end', gap: 6 }}>
-                  <StarRating rating={parseInt(session.rating) || 0} />
-                  <TouchableOpacity onPress={() => setDeleteId(session.id)}>
-                    <Text style={{ color: C.red, fontSize: 12, fontFamily: 'DMSans_400Regular' }}>Delete</Text>
-                  </TouchableOpacity>
-                </View>
+        <Modal visible={!!deleteId} transparent animationType="fade">
+          <View style={s.modalOverlay}>
+            <View style={s.modalCard}>
+              <Text style={s.modalTitle}>Delete session?</Text>
+              <Text style={s.modalSub}>This can't be undone.</Text>
+              <View style={s.modalButtons}>
+                <TouchableOpacity style={s.modalCancel} onPress={() => setDeleteId(null)}>
+                  <Text style={s.modalCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={s.modalDelete} onPress={handleDelete}>
+                  <Text style={s.modalDeleteText}>Delete</Text>
+                </TouchableOpacity>
               </View>
-              <View style={s.pillRow}>
-                <Pill>{session.waveHeight} ft</Pill>
-                <Pill>{session.duration} min</Pill>
-                {session.rating > 0 && <Pill color={ratingColor(session.rating)}>{session.rating}/5</Pill>}
-                {session.board && <Pill>{session.board}</Pill>}
-              </View>
-              {session.notes ? (
-                <View style={s.notes}>
-                  <Text style={s.notesText}>{session.notes}</Text>
-                </View>
-              ) : null}
-            </View>
-          ))
-        )}
-      </ScrollView>
-
-      {/* Delete confirmation modal */}
-      <Modal visible={!!deleteId} transparent animationType="fade">
-        <View style={s.modalOverlay}>
-          <View style={s.modalCard}>
-            <Text style={s.modalTitle}>Delete session?</Text>
-            <Text style={s.modalSub}>This can't be undone.</Text>
-            <View style={s.modalButtons}>
-              <TouchableOpacity style={s.modalCancel} onPress={() => setDeleteId(null)}>
-                <Text style={s.modalCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={s.modalDelete} onPress={handleDelete}>
-                <Text style={s.modalDeleteText}>Delete</Text>
-              </TouchableOpacity>
             </View>
           </View>
-        </View>
-      </Modal>
-    </View>
+        </Modal>
+      </View>
+    </SafeAreaView>
   )
 }
 
@@ -165,7 +164,7 @@ const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
   content: { padding: 20, paddingBottom: 40 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16 },
-  pageTitle: { fontFamily: 'Syne_800ExtraBold', fontSize: 32, color: C.gold },
+  pageTitle: { fontFamily: 'Syne_800ExtraBold', fontSize: 22, color: C.gold },
   pageSub: { fontFamily: 'DMSans_400Regular', fontSize: 12, color: C.textMuted, marginTop: 2 },
   filterScroll: { marginBottom: 16 },
   filterRow: { flexDirection: 'row', gap: 8 },
