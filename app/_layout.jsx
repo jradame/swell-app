@@ -49,7 +49,7 @@ export default function RootLayout() {
 
 	return (
 		<ClerkProvider
-			publishableKey="pk_test_b25lLXN0YWxsaW9uLTk0LmNsZXJrLmFjY291bnRzLmRldiQ"
+			publishableKey="pk_live_Y2xlcmsuc3dlbGx0cmFja2VyYXBwLmNvbSQ"
 			tokenCache={tokenCache}
 		>
 			<StatusBar style="light" />
