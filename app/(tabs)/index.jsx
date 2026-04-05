@@ -1,18 +1,18 @@
-import { useState, useEffect, useCallback } from 'react'
-import { View, Text, ScrollView, StyleSheet, Pressable, TouchableOpacity } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth, useClerk } from '@clerk/clerk-expo'
 import { useFocusEffect } from 'expo-router'
+import { useCallback, useEffect, useState } from 'react'
+import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { fetchConditions, fetchTides, fetchWaterTemp, getSessions } from '../../lib/api'
+import { REGIONS, SPOTS } from '../../lib/spots'
 import { C, R } from '../../lib/theme'
-import { SPOTS, REGIONS } from '../../lib/spots'
-import { getSessions, fetchConditions } from '../../lib/api'
 
 function QualityBadge({ label }) {
   const colors = {
     Clean: { bg: C.greenDim, color: C.green },
-    Fair:  { bg: C.amberDim, color: C.amber },
-    Blown: { bg: C.redDim,   color: C.red   },
-    Flat:  { bg: C.primaryDim, color: C.primary },
+    Fair: { bg: C.amberDim, color: C.amber },
+    Blown: { bg: C.redDim, color: C.red },
+    Flat: { bg: C.primaryDim, color: C.primary },
   }
   const c = colors[label] || colors.Fair
   return (
@@ -25,7 +25,7 @@ function QualityBadge({ label }) {
 function StarRating({ rating = 0 }) {
   return (
     <View style={{ flexDirection: 'row', gap: 2 }}>
-      {[1,2,3,4,5].map(n => (
+      {[1, 2, 3, 4, 5].map(n => (
         <Text key={n} style={{ color: n <= rating ? C.amber : C.textMuted, fontSize: 10 }}>★</Text>
       ))}
     </View>
@@ -42,6 +42,8 @@ export default function HomeScreen() {
   const [condError, setCondError] = useState(false)
   const [sessions, setSessions] = useState([])
   const [sessionsLoading, setSessionsLoading] = useState(true)
+  const [tides, setTides] = useState(null)
+  const [waterTemp, setWaterTemp] = useState(null)
 
   const regionSpots = SPOTS.filter(s => s.region === selectedRegion)
   const selectedSpot = SPOTS.find(s => s.id === selectedSpotId) || regionSpots[0]
@@ -55,9 +57,21 @@ export default function HomeScreen() {
   useEffect(() => {
     if (!selectedSpot) return
     setCondLoading(true); setCondError(false); setConditions(null)
+    setTides(null); setWaterTemp(null)
+
     fetchConditions(selectedSpot.lat, selectedSpot.lng)
       .then(d => { setConditions(d); setCondLoading(false) })
       .catch(() => { setCondError(true); setCondLoading(false) })
+
+    if (selectedSpot.noaaStation) {
+      fetchTides(selectedSpot.noaaStation)
+        .then(d => setTides(d))
+        .catch(() => setTides(null))
+
+      fetchWaterTemp(selectedSpot.noaaStation)
+        .then(d => setWaterTemp(d))
+        .catch(() => setWaterTemp(null))
+    }
   }, [selectedSpotId])
 
   useFocusEffect(useCallback(() => {
@@ -88,6 +102,21 @@ export default function HomeScreen() {
     if (!d) return ''
     return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
+
+  const formatTideTime = (t) => {
+    if (!t) return ''
+    const [, time] = t.split(' ')
+    const [h, m] = time.split(':')
+    const hour = parseInt(h)
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    const h12 = hour % 12 || 12
+    return `${h12}:${m} ${ampm}`
+  }
+
+  const nextTides = tides ? tides.filter(t => {
+    const tideTime = new Date(t.time.replace(' ', 'T'))
+    return tideTime > now
+  }).slice(0, 4) : []
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
@@ -144,6 +173,34 @@ export default function HomeScreen() {
             ))}
           </View>
 
+          {(nextTides.length > 0 || waterTemp) && (
+            <View style={{ flexDirection: 'row', borderTopWidth: 0.5, borderTopColor: C.border }}>
+              {nextTides.length > 0 && (
+                <View style={[{ flex: 1, padding: 12 }, waterTemp && { borderRightWidth: 0.5, borderRightColor: C.border }]}>
+                  <Text style={[s.condLabel, { marginBottom: 8 }]}>TIDES</Text>
+                  <View style={{ flexDirection: 'row', gap: 12 }}>
+                    {nextTides.slice(0, 2).map((tide, i) => (
+                      <View key={i}>
+                        <Text style={s.tideType}>{tide.type.toUpperCase()}</Text>
+                        <Text style={s.tideHeight}>{tide.height}<Text style={s.tideUnit}>ft</Text></Text>
+                        <Text style={s.tideTime}>{formatTideTime(tide.time)}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+              {waterTemp && (
+                <View style={{ flex: 1, padding: 12 }}>
+                  <Text style={[s.condLabel, { marginBottom: 8 }]}>WATER TEMP</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+                    <Text style={s.condVal}>{waterTemp}</Text>
+                    <Text style={s.condUnit}>°F</Text>
+                  </View>
+                </View>
+              )}
+            </View>
+          )}
+
           <View style={s.condFooter}>
             <Text style={s.condFooterText}>Offshore swell · Open-Meteo Marine</Text>
             {conditions?.fetchedAt && (
@@ -153,6 +210,23 @@ export default function HomeScreen() {
             )}
           </View>
         </View>
+
+        {/* {nextTides.length > 0 && (
+          <View style={s.card}>
+            <View style={{ padding: 12, borderBottomWidth: 0.5, borderBottomColor: C.border }}>
+              <Text style={s.sectionTitle}>TIDES</Text>
+            </View>
+            <View style={{ flexDirection: 'row' }}>
+              {nextTides.map((tide, i) => (
+                <View key={i} style={[s.tideCell, i < nextTides.length - 1 && s.tideCellBorder]}>
+                  <Text style={s.tideType}>{tide.type.toUpperCase()}</Text>
+                  <Text style={s.tideHeight}>{tide.height}<Text style={s.tideUnit}>ft</Text></Text>
+                  <Text style={s.tideTime}>{formatTideTime(tide.time)}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )} */}
 
         <View style={s.statRow}>
           {[
@@ -225,6 +299,12 @@ const s = StyleSheet.create({
   condLabel: { fontFamily: 'DMSans_400Regular', fontSize: 9, color: C.textMuted, marginTop: 4, letterSpacing: 0.5 },
   condFooter: { flexDirection: 'row', justifyContent: 'space-between', padding: 8, paddingHorizontal: 12, borderTopWidth: 0.5, borderTopColor: C.border },
   condFooterText: { fontFamily: 'DMSans_400Regular', fontSize: 9, color: C.textMuted },
+  tideCell: { flex: 1, padding: 12, alignItems: 'center' },
+  tideCellBorder: { borderRightWidth: 0.5, borderRightColor: C.border },
+  tideType: { fontFamily: 'DMSans_500Medium', fontSize: 9, color: C.textMuted, letterSpacing: 0.5, marginBottom: 4 },
+  tideHeight: { fontFamily: 'Syne_800ExtraBold', fontSize: 18, color: C.text },
+  tideUnit: { fontFamily: 'DMSans_400Regular', fontSize: 10, color: C.primary },
+  tideTime: { fontFamily: 'DMSans_400Regular', fontSize: 10, color: C.textMuted, marginTop: 2 },
   statRow: { flexDirection: 'row', gap: 10 },
   statCard: { flex: 1, padding: 14, marginBottom: 12 },
   statLabel: { fontFamily: 'DMSans_400Regular', fontSize: 9, color: C.textMuted, letterSpacing: 0.5, marginBottom: 6 },
