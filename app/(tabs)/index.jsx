@@ -173,34 +173,6 @@ export default function HomeScreen() {
             ))}
           </View>
 
-          {(nextTides.length > 0 || waterTemp) && (
-            <View style={{ flexDirection: 'row', borderTopWidth: 0.5, borderTopColor: C.border }}>
-              {nextTides.length > 0 && (
-                <View style={[{ flex: 1, padding: 12 }, waterTemp && { borderRightWidth: 0.5, borderRightColor: C.border }]}>
-                  <Text style={[s.condLabel, { marginBottom: 8 }]}>TIDES</Text>
-                  <View style={{ flexDirection: 'row', gap: 12 }}>
-                    {nextTides.slice(0, 2).map((tide, i) => (
-                      <View key={i}>
-                        <Text style={s.tideType}>{tide.type.toUpperCase()}</Text>
-                        <Text style={s.tideHeight}>{tide.height}<Text style={s.tideUnit}>ft</Text></Text>
-                        <Text style={s.tideTime}>{formatTideTime(tide.time)}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              )}
-              {waterTemp && (
-                <View style={{ flex: 1, padding: 12 }}>
-                  <Text style={[s.condLabel, { marginBottom: 8 }]}>WATER TEMP</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-                    <Text style={s.condVal}>{waterTemp}</Text>
-                    <Text style={s.condUnit}>°F</Text>
-                  </View>
-                </View>
-              )}
-            </View>
-          )}
-
           <View style={s.condFooter}>
             <Text style={s.condFooterText}>Offshore swell · Open-Meteo Marine</Text>
             {conditions?.fetchedAt && (
@@ -211,22 +183,33 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* {nextTides.length > 0 && (
-          <View style={s.card}>
-            <View style={{ padding: 12, borderBottomWidth: 0.5, borderBottomColor: C.border }}>
-              <Text style={s.sectionTitle}>TIDES</Text>
-            </View>
-            <View style={{ flexDirection: 'row' }}>
-              {nextTides.map((tide, i) => (
-                <View key={i} style={[s.tideCell, i < nextTides.length - 1 && s.tideCellBorder]}>
-                  <Text style={s.tideType}>{tide.type.toUpperCase()}</Text>
-                  <Text style={s.tideHeight}>{tide.height}<Text style={s.tideUnit}>ft</Text></Text>
-                  <Text style={s.tideTime}>{formatTideTime(tide.time)}</Text>
+        {(nextTides.length > 0 || waterTemp) && (
+          <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
+            {nextTides.length > 0 && (
+              <View style={[s.card, { flex: 1, padding: 14, marginBottom: 0 }]}>
+                <Text style={[s.condLabel, { marginBottom: 12 }]}>TIDES</Text>
+                <View style={{ flexDirection: 'row', gap: 16 }}>
+                  {nextTides.slice(0, 2).map((tide, i) => (
+                    <View key={i}>
+                      <Text style={s.tideType}>{tide.type.toUpperCase()}</Text>
+                      <Text style={s.tideHeight}>{tide.height}<Text style={s.tideUnit}>ft</Text></Text>
+                      <Text style={s.tideTime}>{formatTideTime(tide.time)}</Text>
+                    </View>
+                  ))}
                 </View>
-              ))}
-            </View>
+              </View>
+            )}
+            {waterTemp && (
+              <View style={[s.card, { flex: 1, padding: 14, marginBottom: 0 }]}>
+                <Text style={[s.condLabel, { marginBottom: 12 }]}>WATER TEMP</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+                  <Text style={s.condVal}>{waterTemp}</Text>
+                  <Text style={s.condUnit}>°F</Text>
+                </View>
+              </View>
+            )}
           </View>
-        )} */}
+        )}
 
         <View style={s.statRow}>
           {[
@@ -299,10 +282,8 @@ const s = StyleSheet.create({
   condLabel: { fontFamily: 'DMSans_400Regular', fontSize: 9, color: C.textMuted, marginTop: 4, letterSpacing: 0.5 },
   condFooter: { flexDirection: 'row', justifyContent: 'space-between', padding: 8, paddingHorizontal: 12, borderTopWidth: 0.5, borderTopColor: C.border },
   condFooterText: { fontFamily: 'DMSans_400Regular', fontSize: 9, color: C.textMuted },
-  tideCell: { flex: 1, padding: 12, alignItems: 'center' },
-  tideCellBorder: { borderRightWidth: 0.5, borderRightColor: C.border },
   tideType: { fontFamily: 'DMSans_500Medium', fontSize: 9, color: C.textMuted, letterSpacing: 0.5, marginBottom: 4 },
-  tideHeight: { fontFamily: 'Syne_800ExtraBold', fontSize: 18, color: C.text },
+  tideHeight: { fontFamily: 'Syne_800ExtraBold', fontSize: 22, color: C.text },
   tideUnit: { fontFamily: 'DMSans_400Regular', fontSize: 10, color: C.primary },
   tideTime: { fontFamily: 'DMSans_400Regular', fontSize: 10, color: C.textMuted, marginTop: 2 },
   statRow: { flexDirection: 'row', gap: 10 },
