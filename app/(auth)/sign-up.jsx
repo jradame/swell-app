@@ -1,7 +1,7 @@
 import { useSignUp } from '@clerk/clerk-expo'
-import { useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native'
 import { Link } from 'expo-router'
+import { useState } from 'react'
+import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { C, R } from '../../lib/theme'
 
 export default function SignUp() {
@@ -30,9 +30,13 @@ export default function SignUp() {
     setLoading(true); setError('')
     try {
       const result = await signUp.attemptEmailAddressVerification({ code })
-      if (result.status === 'complete') await setActive({ session: result.createdSessionId })
+      if (result.status === 'complete') {
+        await setActive({ session: result.createdSessionId })
+      } else {
+        setError(`Verification status: ${result.status}. Please try again.`)
+      }
     } catch (e) {
-      setError(e.errors?.[0]?.message || 'Invalid code')
+      setError(e.errors?.[0]?.message || e.message || 'Invalid code')
     }
     setLoading(false)
   }
