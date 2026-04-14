@@ -1,10 +1,13 @@
 import { useAuth } from '@clerk/clerk-expo'
 import { useFocusEffect } from 'expo-router'
 import { useCallback, useState } from 'react'
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { deleteSession, getSessions } from '../../lib/api'
+import { deleteSession, getSessions, updateSession } from '../../lib/api'
+import { REGIONS, SPOTS } from '../../lib/spots'
 import { C, R } from '../../lib/theme'
+
+const BOARDS = ["5'10 shortboard", "6'0 thruster", "6'2 shortboard", "6'4 step-up", "7'6 funboard", "8'0 mini-mal", "9'0 longboard", "9'0 gun", "Bodyboard", "Other"]
 
 const FILTERS = ['All', 'This month', 'Best rated', 'Biggest waves']
 
@@ -38,6 +41,11 @@ export default function HistoryScreen() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('All')
   const [deleteId, setDeleteId] = useState(null)
+  const [editSession, setEditSession] = useState(null)
+  const [editForm, setEditForm] = useState({})
+  const [editRegion, setEditRegion] = useState('West Coast')
+  const [showEditBoardPicker, setShowEditBoardPicker] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   const loadSessions = useCallback(() => {
     getToken().then(token => {
@@ -48,6 +56,43 @@ export default function HistoryScreen() {
   }, [])
 
   useFocusEffect(loadSessions)
+
+  const openEdit = (session) => {
+    const spot = SPOTS.find(s => s.name === session.spot)
+    setEditRegion(spot ? spot.region : 'West Coast')
+    setEditForm({
+      spot: session.spot,
+      date: session.date,
+      waveHeight: String(session.waveHeight),
+      duration: String(session.duration),
+      board: session.board || '',
+      rating: parseInt(session.rating) || 0,
+      notes: session.notes || '',
+    })
+    setEditSession(session)
+    setShowEditBoardPicker(false)
+  }
+
+  const setEdit = (field, val) => setEditForm(prev => ({ ...prev, [field]: val }))
+
+  const handleEditRegionChange = (region) => {
+    setEditRegion(region)
+    setEdit('spot', '')
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editForm.spot || !editForm.date || !editForm.waveHeight || !editForm.duration) return
+    setSaving(true)
+    try {
+      const token = await getToken()
+      const updated = await updateSession(token, editSession.id, editForm)
+      setSessions(prev => prev.map(s => s.id === editSession.id ? { ...s, ...updated } : s))
+      setEditSession(null)
+    } catch (e) {
+      console.error(e)
+    }
+    setSaving(false)
+  }
 
   const handleDelete = async () => {
     if (!deleteId) return
@@ -118,9 +163,14 @@ export default function HistoryScreen() {
                   </View>
                   <View style={{ alignItems: 'flex-end', gap: 6 }}>
                     <StarRating rating={parseInt(session.rating) || 0} />
-                    <TouchableOpacity onPress={() => setDeleteId(session.id)}>
-                      <Text style={{ color: C.red, fontSize: 12, fontFamily: 'DMSans_400Regular' }}>Delete</Text>
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', gap: 12 }}>
+                      <TouchableOpacity onPress={() => openEdit(session)}>
+                        <Text style={{ color: C.primary, fontSize: 12, fontFamily: 'DMSans_400Regular' }}>Edit</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => setDeleteId(session.id)}>
+                        <Text style={{ color: C.red, fontSize: 12, fontFamily: 'DMSans_400Regular' }}>Delete</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </View>
                 <View style={s.pillRow}>
@@ -138,6 +188,97 @@ export default function HistoryScreen() {
             ))
           )}
         </ScrollView>
+
+        <Modal visible={!!editSession} transparent animationType="slide">
+          <View style={s.editOverlay}>
+            <SafeAreaView style={{ flex: 1 }}>
+              <View style={s.editSheet}>
+                <View style={s.editHeader}>
+                  <Text style={s.editTitle}>EDIT SESSION</Text>
+                  <TouchableOpacity onPress={() => setEditSession(null)}>
+                    <Text style={{ color: C.textMuted, fontSize: 22, lineHeight: 24 }}>×</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                  <Text style={s.editLabel}>REGION</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      {REGIONS.map(r => (
+                        <Pressable key={r} onPress={() => handleEditRegionChange(r)} style={[s.chip, editRegion === r && s.chipActive]}>
+                          <Text style={[s.chipText, editRegion === r && s.chipTextActive]}>{r}</Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  </ScrollView>
+
+                  <Text style={s.editLabel}>SPOT</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                      {SPOTS.filter(sp => sp.region === editRegion).map(sp => (
+                        <Pressable key={sp.id} onPress={() => setEdit('spot', sp.name)} style={[s.chip, editForm.spot === sp.name && s.chipSpotActive]}>
+                          <Text style={[s.chipText, editForm.spot === sp.name && s.chipSpotTextActive]}>{sp.name}</Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  </ScrollView>
+
+                  <Text style={s.editLabel}>DATE</Text>
+                  <TextInput style={s.editInput} value={editForm.date} onChangeText={v => setEdit('date', v)} placeholder="YYYY-MM-DD" placeholderTextColor={C.textMuted} />
+
+                  <View style={{ flexDirection: 'row', gap: 12 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.editLabel}>WAVE HEIGHT (FT)</Text>
+                      <TextInput style={s.editInput} value={editForm.waveHeight} onChangeText={v => setEdit('waveHeight', v)} keyboardType="decimal-pad" placeholderTextColor={C.textMuted} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.editLabel}>DURATION (MIN)</Text>
+                      <TextInput style={s.editInput} value={editForm.duration} onChangeText={v => setEdit('duration', v)} keyboardType="number-pad" placeholderTextColor={C.textMuted} />
+                    </View>
+                  </View>
+
+                  <Text style={s.editLabel}>BOARD</Text>
+                  <TouchableOpacity style={s.editInput} onPress={() => setShowEditBoardPicker(!showEditBoardPicker)}>
+                    <Text style={{ color: editForm.board ? C.text : C.textMuted, fontFamily: 'DMSans_400Regular', fontSize: 15 }}>
+                      {editForm.board || 'Select a board (optional)'}
+                    </Text>
+                  </TouchableOpacity>
+                  {showEditBoardPicker && (
+                    <View style={s.pickerList}>
+                      {BOARDS.map(b => (
+                        <TouchableOpacity key={b} style={s.pickerItem} onPress={() => { setEdit('board', b); setShowEditBoardPicker(false) }}>
+                          <Text style={[s.pickerText, editForm.board === b && { color: C.gold }]}>{b}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+
+                  <Text style={s.editLabel}>SESSION RATING</Text>
+                  <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+                    {[1, 2, 3, 4, 5].map(n => (
+                      <TouchableOpacity key={n} onPress={() => setEdit('rating', n)} style={[s.starBtn, editForm.rating >= n && s.starBtnActive]}>
+                        <Text style={[s.starText, editForm.rating >= n && s.starTextActive]}>{editForm.rating >= n ? '★' : '☆'}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+
+                  <Text style={s.editLabel}>NOTES</Text>
+                  <TextInput style={[s.editInput, { height: 80, textAlignVertical: 'top' }]} value={editForm.notes} onChangeText={v => setEdit('notes', v)} placeholder="How were the conditions?" placeholderTextColor={C.textMuted} multiline />
+
+                  <TouchableOpacity
+                    style={[s.saveBtn, (!editForm.spot || !editForm.date || !editForm.waveHeight || !editForm.duration) && s.saveBtnDisabled]}
+                    onPress={handleSaveEdit}
+                    disabled={saving || !editForm.spot || !editForm.date || !editForm.waveHeight || !editForm.duration}
+                  >
+                    <Text style={[s.saveBtnText, (!editForm.spot || !editForm.date || !editForm.waveHeight || !editForm.duration) && { color: C.textMuted }]}>
+                      {saving ? 'Saving...' : 'Save changes'}
+                    </Text>
+                  </TouchableOpacity>
+                </ScrollView>
+              </View>
+            </SafeAreaView>
+          </View>
+        </Modal>
 
         <Modal visible={!!deleteId} transparent animationType="fade">
           <View style={s.modalOverlay}>
@@ -183,6 +324,28 @@ const s = StyleSheet.create({
   notesText: { fontFamily: 'DMSans_400Regular', fontSize: 12, color: C.textSecondary, lineHeight: 18 },
   empty: { fontFamily: 'DMSans_400Regular', fontSize: 13, color: C.textMuted, textAlign: 'center', padding: 20 },
   emptyCard: { backgroundColor: C.card, borderRadius: R.lg, borderWidth: 0.5, borderColor: C.borderMid, borderStyle: 'dashed', padding: 32, alignItems: 'center' },
+  editOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  editSheet: { backgroundColor: C.bg, borderTopLeftRadius: 20, borderTopRightRadius: 20, borderTopWidth: 0.5, borderColor: C.borderMid, padding: 20, paddingBottom: 32, maxHeight: '92%' },
+  editHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  editTitle: { fontFamily: 'Syne_800ExtraBold', fontSize: 18, color: C.gold },
+  editLabel: { fontFamily: 'DMSans_500Medium', fontSize: 10, color: C.textMuted, letterSpacing: 1, marginBottom: 8 },
+  editInput: { backgroundColor: C.card, borderRadius: R.md, borderWidth: 0.5, borderColor: C.borderMid, color: C.text, fontFamily: 'DMSans_400Regular', fontSize: 15, padding: 14, marginBottom: 16 },
+  chip: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, borderWidth: 0.5, borderColor: C.border, backgroundColor: C.card },
+  chipActive: { backgroundColor: C.goldDim, borderColor: C.gold },
+  chipText: { fontFamily: 'DMSans_500Medium', fontSize: 12, color: C.textMuted },
+  chipTextActive: { color: C.gold },
+  chipSpotActive: { backgroundColor: C.primaryDim, borderColor: C.primary },
+  chipSpotTextActive: { color: C.primary },
+  pickerList: { backgroundColor: C.cardAlt, borderRadius: R.md, borderWidth: 0.5, borderColor: C.borderMid, marginBottom: 16, overflow: 'hidden' },
+  pickerItem: { padding: 14, borderBottomWidth: 0.5, borderBottomColor: C.border },
+  pickerText: { fontFamily: 'DMSans_400Regular', fontSize: 14, color: C.textSecondary },
+  starBtn: { flex: 1, padding: 12, backgroundColor: C.card, borderRadius: R.md, borderWidth: 0.5, borderColor: C.border, alignItems: 'center' },
+  starBtnActive: { backgroundColor: C.goldDim, borderColor: C.gold },
+  starText: { fontSize: 20, color: C.textMuted },
+  starTextActive: { color: C.gold },
+  saveBtn: { backgroundColor: C.gold, borderRadius: R.lg, padding: 16, alignItems: 'center', marginTop: 8 },
+  saveBtnDisabled: { backgroundColor: C.card },
+  saveBtnText: { fontFamily: 'DMSans_500Medium', fontSize: 15, color: C.bg },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 20 },
   modalCard: { backgroundColor: C.surface, borderRadius: R.xl, borderWidth: 0.5, borderColor: C.borderMid, padding: 24, width: '100%', maxWidth: 320 },
   modalTitle: { fontFamily: 'DMSans_500Medium', fontSize: 15, color: C.text, marginBottom: 6, textAlign: 'center' },
