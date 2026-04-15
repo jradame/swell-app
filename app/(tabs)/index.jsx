@@ -183,33 +183,39 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {(nextTides.length > 0 || waterTemp) && (
-          <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
-            {nextTides.length > 0 && (
-              <View style={[s.card, { flex: 1, padding: 14, marginBottom: 0 }]}>
-                <Text style={[s.condLabel, { marginBottom: 12 }]}>TIDES</Text>
-                <View style={{ flexDirection: 'row', gap: 16 }}>
-                  {nextTides.slice(0, 2).map((tide, i) => (
-                    <View key={i}>
-                      <Text style={s.tideType}>{tide.type.toUpperCase()}</Text>
-                      <Text style={s.tideHeight}>{tide.height}<Text style={s.tideUnit}>ft</Text></Text>
-                      <Text style={s.tideTime}>{formatTideTime(tide.time)}</Text>
-                    </View>
-                  ))}
-                </View>
+        {(tides !== null || waterTemp) && (
+  <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
+    {tides !== null && (
+      <View style={[s.card, { flex: 1, padding: 14, marginBottom: 0 }]}>
+        <Text style={[s.condLabel, { marginBottom: 12 }]}>TIDES</Text>
+        {nextTides.length > 0 ? (
+          <View style={{ flexDirection: 'row', gap: 16 }}>
+            {nextTides.slice(0, 2).map((tide, i) => (
+              <View key={i}>
+                <Text style={s.tideType}>{tide.type.toUpperCase()}</Text>
+                <Text style={s.tideHeight}>{tide.height}<Text style={s.tideUnit}>ft</Text></Text>
+                <Text style={s.tideTime}>{formatTideTime(tide.time)}</Text>
               </View>
-            )}
-            {waterTemp && (
-              <View style={[s.card, { flex: 1, padding: 14, marginBottom: 0 }]}>
-                <Text style={[s.condLabel, { marginBottom: 12 }]}>WATER TEMP</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-                  <Text style={s.condVal}>{waterTemp}</Text>
-                  <Text style={s.condUnit}>°F</Text>
-                </View>
-              </View>
-            )}
+            ))}
           </View>
+        ) : (
+          <Text style={{ fontFamily: 'DMSans_400Regular', fontSize: 11, color: C.textMuted, lineHeight: 16 }}>
+            All predictions for today have passed. Check back tomorrow.
+          </Text>
         )}
+      </View>
+    )}
+    {waterTemp && (
+      <View style={[s.card, { flex: 1, padding: 14, marginBottom: 0 }]}>
+        <Text style={[s.condLabel, { marginBottom: 12 }]}>WATER TEMP</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+          <Text style={s.condVal}>{waterTemp}</Text>
+          <Text style={s.condUnit}>°F</Text>
+        </View>
+      </View>
+    )}
+  </View>
+)}
 
         <View style={s.statRow}>
           {[
