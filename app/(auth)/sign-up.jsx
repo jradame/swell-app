@@ -7,8 +7,7 @@ import { C, R } from '../../lib/theme'
 export default function SignUp() {
   const { signUp, setActive, isLoaded } = useSignUp()
   const [email, setEmail] = useState('')
-  const [code, setCode] = useState('')
-  const [step, setStep] = useState('email')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -16,27 +15,14 @@ export default function SignUp() {
     if (!isLoaded) return
     setLoading(true); setError('')
     try {
-      await signUp.create({ emailAddress: email })
-      await signUp.prepareEmailAddressVerification({ strategy: 'email_code' })
-      setStep('code')
-    } catch (e) {
-      setError(e.errors?.[0]?.message || 'Something went wrong')
-    }
-    setLoading(false)
-  }
-
-  const handleVerify = async () => {
-    if (!isLoaded) return
-    setLoading(true); setError('')
-    try {
-      const result = await signUp.attemptEmailAddressVerification({ code })
+      const result = await signUp.create({ emailAddress: email, password })
       if (result.status === 'complete') {
         await setActive({ session: result.createdSessionId })
       } else {
-        setError(`Verification status: ${result.status}. Please try again.`)
+        setError('Something went wrong. Please try again.')
       }
     } catch (e) {
-      setError(e.errors?.[0]?.message || e.message || 'Invalid code')
+      setError(e.errors?.[0]?.message || 'Something went wrong')
     }
     setLoading(false)
   }
@@ -48,50 +34,44 @@ export default function SignUp() {
         <Text style={s.sub}>Surf session tracker</Text>
 
         <View style={s.card}>
-          <Text style={s.title}>{step === 'email' ? 'Create account' : 'Verify your email'}</Text>
-          <Text style={s.desc}>
-            {step === 'email' ? 'Enter your email to get started' : `We sent a code to ${email}`}
-          </Text>
+          <Text style={s.title}>Create account</Text>
+          <Text style={s.desc}>Enter your email to get started</Text>
 
-          {step === 'email' ? (
-            <TextInput
-              style={s.input}
-              placeholder="Email address"
-              placeholderTextColor={C.textMuted}
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              autoComplete="email"
-            />
-          ) : (
-            <TextInput
-              style={s.input}
-              placeholder="Verification code"
-              placeholderTextColor={C.textMuted}
-              value={code}
-              onChangeText={setCode}
-              keyboardType="number-pad"
-              autoComplete="one-time-code"
-            />
-          )}
+          <TextInput
+            style={s.input}
+            placeholder="Email address"
+            placeholderTextColor={C.textMuted}
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            autoComplete="email"
+          />
+
+          <TextInput
+            style={s.input}
+            placeholder="Password"
+            placeholderTextColor={C.textMuted}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoComplete="password-new"
+          />
 
           {error ? <Text style={s.error}>{error}</Text> : null}
 
           <TouchableOpacity
             style={[s.btn, loading && s.btnDisabled]}
-            onPress={step === 'email' ? handleSignUp : handleVerify}
+            onPress={handleSignUp}
             disabled={loading}
           >
-            <Text style={s.btnText}>{loading ? 'Loading...' : step === 'email' ? 'Continue' : 'Verify'}</Text>
+            <Text style={s.btnText}>{loading ? 'Loading...' : 'Create account'}</Text>
           </TouchableOpacity>
 
-          {step === 'email' && (
-            <View style={s.footer}>
-              <Text style={s.footerText}>Already have an account? </Text>
-              <Link href="/sign-in" style={s.link}>Sign in</Link>
-            </View>
-          )}
+          <View style={s.footer}>
+            <Text style={s.footerText}>Already have an account? </Text>
+            <Link href="/sign-in" style={s.link}>Sign in</Link>
+          </View>
         </View>
       </View>
     </KeyboardAvoidingView>
