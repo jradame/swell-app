@@ -12,7 +12,8 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.justinadame.swell",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIDeviceFamily": [1]
       }
     },
     "android": {
