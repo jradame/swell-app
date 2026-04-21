@@ -8,35 +8,24 @@ export default function SignIn() {
   const { signIn, setActive, isLoaded } = useSignIn()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [code, setCode] = useState('')
-  const [step, setStep] = useState('email') // email | code
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleContinue = async () => {
+  const handleSignIn = async () => {
     if (!isLoaded) return
     setLoading(true); setError('')
     try {
-      await signIn.create({ identifier: email })
-      const emailFactor = signIn.supportedFirstFactors.find(f => f.strategy === 'email_code')
-      if (emailFactor) {
-        await signIn.prepareFirstFactor({ strategy: 'email_code', emailAddressId: emailFactor.emailAddressId })
-        setStep('code')
+      const result = await signIn.create({
+        identifier: email,
+        password,
+      })
+      if (result.status === 'complete') {
+        await setActive({ session: result.createdSessionId })
+      } else {
+        setError('Something went wrong. Please try again.')
       }
     } catch (e) {
       setError(e.errors?.[0]?.message || 'Something went wrong')
-    }
-    setLoading(false)
-  }
-
-  const handleVerify = async () => {
-    if (!isLoaded) return
-    setLoading(true); setError('')
-    try {
-      const result = await signIn.attemptFirstFactor({ strategy: 'email_code', code })
-      if (result.status === 'complete') await setActive({ session: result.createdSessionId })
-    } catch (e) {
-      setError(e.errors?.[0]?.message || 'Invalid code')
     }
     setLoading(false)
   }
@@ -48,56 +37,44 @@ export default function SignIn() {
         <Text style={s.sub}>Surf session tracker</Text>
 
         <View style={s.card}>
-          <Text style={s.title}>{step === 'email' ? 'Sign in' : 'Check your email'}</Text>
-          <Text style={s.desc}>
-            {step === 'email' ? 'Enter your email to continue' : `We sent a code to ${email}`}
-          </Text>
+          <Text style={s.title}>Sign in</Text>
+          <Text style={s.desc}>Enter your email and password to continue</Text>
 
-          {step === 'email' ? (
-            <TextInput
-              style={s.input}
-              placeholder="Email address"
-              placeholderTextColor={C.textMuted}
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              autoComplete="email"
-            />
-          ) : (
-            <TextInput
-              style={s.input}
-              placeholder="Verification code"
-              placeholderTextColor={C.textMuted}
-              value={code}
-              onChangeText={setCode}
-              keyboardType="number-pad"
-              autoComplete="one-time-code"
-            />
-          )}
+          <TextInput
+            style={s.input}
+            placeholder="Email address"
+            placeholderTextColor={C.textMuted}
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            autoComplete="email"
+          />
+
+          <TextInput
+            style={s.input}
+            placeholder="Password"
+            placeholderTextColor={C.textMuted}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoComplete="password"
+          />
 
           {error ? <Text style={s.error}>{error}</Text> : null}
 
           <TouchableOpacity
             style={[s.btn, loading && s.btnDisabled]}
-            onPress={step === 'email' ? handleContinue : handleVerify}
+            onPress={handleSignIn}
             disabled={loading}
           >
-            <Text style={s.btnText}>{loading ? 'Loading...' : step === 'email' ? 'Continue' : 'Verify'}</Text>
+            <Text style={s.btnText}>{loading ? 'Loading...' : 'Sign in'}</Text>
           </TouchableOpacity>
 
-          {step === 'email' && (
-            <View style={s.footer}>
-              <Text style={s.footerText}>Don't have an account? </Text>
-              <Link href="/sign-up" style={s.link}>Sign up</Link>
-            </View>
-          )}
-
-          {step === 'code' && (
-            <TouchableOpacity onPress={() => setStep('email')}>
-              <Text style={[s.footerText, { textAlign: 'center', marginTop: 12 }]}>← Back</Text>
-            </TouchableOpacity>
-          )}
+          <View style={s.footer}>
+            <Text style={s.footerText}>Don't have an account? </Text>
+            <Link href="/sign-up" style={s.link}>Sign up</Link>
+          </View>
         </View>
       </View>
     </KeyboardAvoidingView>

@@ -81,7 +81,7 @@ export default function SignUp() {
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
   inner: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
-  logo: { fontFamily: 'Syne_800ExtraBold', fontSize: 48, color: C.gold, letterSpacing: 4, marginBottom: 4 },
+  logo: { fontFamily: 'Syne_800ExtraBold', fontSize: 36, color: C.gold, letterSpacing: 2, marginBottom: 4 },
   sub: { fontFamily: 'DMSans_400Regular', fontSize: 13, color: C.textMuted, marginBottom: 40 },
   card: { width: '100%', backgroundColor: C.surface, borderRadius: R.xl, padding: 24, borderWidth: 0.5, borderColor: C.borderMid },
   title: { fontFamily: 'Syne_700Bold', fontSize: 20, color: C.text, marginBottom: 6 },
