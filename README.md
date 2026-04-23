@@ -56,7 +56,7 @@ Sessions are stored in a real PostgreSQL database and sync across the web app an
 app/
 _layout.jsx          ClerkProvider root, font loading, auth gate
 (auth)/
-sign-in.jsx        Email + verification code flow
+sign-in.jsx        Email + password flow
 sign-up.jsx        Create account flow
 (tabs)/
 _layout.jsx        Tab bar with Ionicons
@@ -79,8 +79,8 @@ splash-icon.png    Splash screen image
 
 Clone the repo and install dependencies:
 ```bash
-git clone https://github.com/jradame/swell-native.git
-cd swell-native
+git clone https://github.com/jradame/swell-app.git
+cd swell-app
 npm install
 ```
 
@@ -95,9 +95,7 @@ Scan the QR code with Expo Go on your phone. The app connects to the live backen
 
 ## Auth
 
-Authentication is handled by Clerk on a production instance tied to swelltrackerapp.com. The native app uses the Clerk Expo SDK with SecureStore token caching. On sign-in, a JWT is stored and passed as a Bearer token on every API request to the backend.
-
-The backend API routes accept both Clerk session cookies (web) and Bearer tokens (native) so both apps write to the same database.
+Authentication is handled by Clerk on a production instance tied to swelltrackerapp.com. The native app uses the Clerk Expo SDK with SecureStore token caching. On sign-in, a JWT is stored and passed as a Bearer token on every API request to the backend. The backend API routes accept both Clerk session cookies (web) and Bearer tokens (native) so both apps write to the same database.
 
 ---
 
@@ -117,7 +115,7 @@ eas submit --platform ios
 
 ## Related
 
-- Swell backend: [github.com/jradame/swell-v3](https://github.com/jradame/swell-v3)
+- Swell web: [github.com/jradame/swell-web](https://github.com/jradame/swell-web)
 - Portfolio: [justinadame.com](https://justinadame.com)
 
 ---
