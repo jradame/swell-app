@@ -8,6 +8,7 @@ export default function SignIn() {
   const { signIn, setActive, isLoaded } = useSignIn()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -51,15 +52,20 @@ export default function SignIn() {
             autoComplete="email"
           />
 
-          <TextInput
-            style={s.input}
-            placeholder="Password"
-            placeholderTextColor={C.textMuted}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            autoComplete="password"
-          />
+          <View style={s.passwordContainer}>
+            <TextInput
+              style={s.passwordInput}
+              placeholder="Password"
+              placeholderTextColor={C.textMuted}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              autoComplete="password"
+            />
+            <TouchableOpacity style={s.eyeBtn} onPress={() => setShowPassword(v => !v)}>
+              <Text style={s.eyeText}>{showPassword ? 'Hide' : 'Show'}</Text>
+            </TouchableOpacity>
+          </View>
 
           {error ? <Text style={s.error}>{error}</Text> : null}
 
@@ -90,6 +96,10 @@ const s = StyleSheet.create({
   title: { fontFamily: 'Syne_700Bold', fontSize: 20, color: C.text, marginBottom: 6 },
   desc: { fontFamily: 'DMSans_400Regular', fontSize: 13, color: C.textMuted, marginBottom: 20 },
   input: { backgroundColor: C.cardAlt, borderRadius: R.md, borderWidth: 0.5, borderColor: C.borderMid, color: C.text, fontFamily: 'DMSans_400Regular', fontSize: 15, padding: 14, marginBottom: 12 },
+  passwordContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.cardAlt, borderRadius: R.md, borderWidth: 0.5, borderColor: C.borderMid, marginBottom: 12 },
+  passwordInput: { flex: 1, color: C.text, fontFamily: 'DMSans_400Regular', fontSize: 15, padding: 14 },
+  eyeBtn: { paddingHorizontal: 14 },
+  eyeText: { fontFamily: 'DMSans_500Medium', fontSize: 13, color: C.gold },
   error: { color: C.red, fontSize: 12, marginBottom: 10, fontFamily: 'DMSans_400Regular' },
   btn: { backgroundColor: C.gold, borderRadius: R.lg, padding: 16, alignItems: 'center', marginTop: 4 },
   btnDisabled: { opacity: 0.6 },
