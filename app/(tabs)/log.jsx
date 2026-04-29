@@ -1,13 +1,11 @@
 import { useAuth } from '@clerk/clerk-expo'
 import { useRouter } from 'expo-router'
 import { useState } from 'react'
-import { Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { createSession } from '../../lib/api'
 import { REGIONS, SPOTS } from '../../lib/spots'
 import { C, R } from '../../lib/theme'
-import { ScrollView } from 'react-native'
 
 const BOARDS = ["5'10 shortboard", "6'0 thruster", "6'2 shortboard", "6'4 step-up", "7'6 funboard", "8'0 mini-mal", "9'0 longboard", "9'0 gun", "Bodyboard", "Other"]
 
@@ -60,99 +58,103 @@ export default function LogScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
-      <KeyboardAwareScrollView
-        style={s.screen}
-        contentContainerStyle={s.content}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        enableOnAndroid
-        extraScrollHeight={20}
-      >
-        <Text style={s.pageTitle}>LOG SESSION</Text>
-        <Text style={s.pageSub}>How was it out there?</Text>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView
+          style={s.screen}
+          contentContainerStyle={s.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Text style={s.pageTitle}>LOG SESSION</Text>
+          <Text style={s.pageSub}>How was it out there?</Text>
 
-        <Text style={s.label}>REGION</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            {REGIONS.map(r => (
-              <Pressable key={r} onPress={() => handleRegionChange(r)} style={[s.chip, selectedRegion === r && s.chipActive]}>
-                <Text style={[s.chipText, selectedRegion === r && s.chipTextActive]}>{r}</Text>
-              </Pressable>
-            ))}
+          <Text style={s.label}>REGION</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {REGIONS.map(r => (
+                <Pressable key={r} onPress={() => handleRegionChange(r)} style={[s.chip, selectedRegion === r && s.chipActive]}>
+                  <Text style={[s.chipText, selectedRegion === r && s.chipTextActive]}>{r}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </ScrollView>
+
+          <Text style={s.label}>SPOT</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {regionSpots.map(spot => (
+                <Pressable key={spot.id} onPress={() => set('spot', spot.name)} style={[s.chip, form.spot === spot.name && s.chipSpotActive]}>
+                  <Text style={[s.chipText, form.spot === spot.name && s.chipSpotTextActive]}>{spot.name}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </ScrollView>
+
+          <Text style={s.label}>DATE</Text>
+          <TextInput style={s.input} value={form.date} onChangeText={v => set('date', v)} placeholder="YYYY-MM-DD" placeholderTextColor={C.textMuted} />
+
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={s.label}>WAVE HEIGHT (FT)</Text>
+              <TextInput style={s.input} value={form.waveHeight} onChangeText={v => set('waveHeight', v)} placeholder="e.g. 4" placeholderTextColor={C.textMuted} keyboardType="decimal-pad" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={s.label}>DURATION (MIN)</Text>
+              <TextInput style={s.input} value={form.duration} onChangeText={v => set('duration', v)} placeholder="e.g. 90" placeholderTextColor={C.textMuted} keyboardType="number-pad" />
+            </View>
           </View>
-        </ScrollView>
 
-        <Text style={s.label}>SPOT</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            {regionSpots.map(spot => (
-              <Pressable key={spot.id} onPress={() => set('spot', spot.name)} style={[s.chip, form.spot === spot.name && s.chipSpotActive]}>
-                <Text style={[s.chipText, form.spot === spot.name && s.chipSpotTextActive]}>{spot.name}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </ScrollView>
+          <Text style={s.label}>BOARD</Text>
+          <TouchableOpacity style={s.input} onPress={() => setShowBoardPicker(!showBoardPicker)}>
+            <Text style={{ color: form.board ? C.text : C.textMuted, fontFamily: 'DMSans_400Regular', fontSize: 15 }}>
+              {form.board || 'Select a board (optional)'}
+            </Text>
+          </TouchableOpacity>
+          {showBoardPicker && (
+            <View style={s.pickerList}>
+              {BOARDS.map(b => (
+                <TouchableOpacity key={b} style={s.pickerItem} onPress={() => { set('board', b); setShowBoardPicker(false) }}>
+                  <Text style={[s.pickerText, form.board === b && { color: C.gold }]}>{b}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
 
-        <Text style={s.label}>DATE</Text>
-        <TextInput style={s.input} value={form.date} onChangeText={v => set('date', v)} placeholder="YYYY-MM-DD" placeholderTextColor={C.textMuted} />
+          <Text style={s.label}>NOTES</Text>
+          <TextInput
+            style={[s.input, { height: 90, textAlignVertical: 'top' }]}
+            value={form.notes}
+            onChangeText={v => set('notes', v)}
+            placeholder="How were the conditions?"
+            placeholderTextColor={C.textMuted}
+            multiline
+            returnKeyType="done"
+            blurOnSubmit
+          />
 
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <View style={{ flex: 1 }}>
-            <Text style={s.label}>WAVE HEIGHT (FT)</Text>
-            <TextInput style={s.input} value={form.waveHeight} onChangeText={v => set('waveHeight', v)} placeholder="e.g. 4" placeholderTextColor={C.textMuted} keyboardType="decimal-pad" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={s.label}>DURATION (MIN)</Text>
-            <TextInput style={s.input} value={form.duration} onChangeText={v => set('duration', v)} placeholder="e.g. 90" placeholderTextColor={C.textMuted} keyboardType="number-pad" />
-          </View>
-        </View>
-
-        <Text style={s.label}>BOARD</Text>
-        <TouchableOpacity style={s.input} onPress={() => setShowBoardPicker(!showBoardPicker)}>
-          <Text style={{ color: form.board ? C.text : C.textMuted, fontFamily: 'DMSans_400Regular', fontSize: 15 }}>
-            {form.board || 'Select a board (optional)'}
-          </Text>
-        </TouchableOpacity>
-        {showBoardPicker && (
-          <View style={s.pickerList}>
-            {BOARDS.map(b => (
-              <TouchableOpacity key={b} style={s.pickerItem} onPress={() => { set('board', b); setShowBoardPicker(false) }}>
-                <Text style={[s.pickerText, form.board === b && { color: C.gold }]}>{b}</Text>
+          <Text style={s.label}>SESSION RATING</Text>
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 24 }}>
+            {[1, 2, 3, 4, 5].map(n => (
+              <TouchableOpacity key={n} onPress={() => set('rating', n)} style={[s.starBtn, form.rating >= n && s.starBtnActive]}>
+                <Text style={[s.starText, form.rating >= n && s.starTextActive]}>{form.rating >= n ? '★' : '☆'}</Text>
               </TouchableOpacity>
             ))}
           </View>
-        )}
+        </ScrollView>
 
-        <Text style={s.label}>NOTES</Text>
-        <TextInput
-          style={[s.input, { height: 90, textAlignVertical: 'top' }]}
-          value={form.notes}
-          onChangeText={v => set('notes', v)}
-          placeholder="How were the conditions?"
-          placeholderTextColor={C.textMuted}
-          multiline
-        />
-
-        <Text style={s.label}>SESSION RATING</Text>
-        <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
-          {[1, 2, 3, 4, 5].map(n => (
-            <TouchableOpacity key={n} onPress={() => set('rating', n)} style={[s.starBtn, form.rating >= n && s.starBtnActive]}>
-              <Text style={[s.starText, form.rating >= n && s.starTextActive]}>{form.rating >= n ? '★' : '☆'}</Text>
-            </TouchableOpacity>
-          ))}
+        <View style={s.bottomBar}>
+          <TouchableOpacity style={[s.saveBtn, !canSave && s.saveBtnDisabled]} onPress={handleSave} disabled={!canSave || saving}>
+            <Text style={[s.saveBtnText, !canSave && { color: C.textMuted }]}>{saving ? 'Saving...' : 'Save session'}</Text>
+          </TouchableOpacity>
         </View>
-
-        <TouchableOpacity style={[s.saveBtn, !canSave && s.saveBtnDisabled]} onPress={handleSave} disabled={!canSave || saving}>
-          <Text style={[s.saveBtnText, !canSave && { color: C.textMuted }]}>{saving ? 'Saving...' : 'Save session'}</Text>
-        </TouchableOpacity>
-      </KeyboardAwareScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 }
 
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
-  content: { padding: 20, paddingBottom: 60 },
+  content: { padding: 20, paddingBottom: 20 },
   pageTitle: { fontFamily: 'Syne_800ExtraBold', fontSize: 22, color: C.gold, marginBottom: 4 },
   pageSub: { fontFamily: 'DMSans_400Regular', fontSize: 13, color: C.textMuted, marginBottom: 24 },
   label: { fontFamily: 'DMSans_500Medium', fontSize: 10, color: C.textMuted, letterSpacing: 1, marginBottom: 8 },
@@ -170,7 +172,8 @@ const s = StyleSheet.create({
   starBtnActive: { backgroundColor: C.goldDim, borderColor: C.gold },
   starText: { fontSize: 20, color: C.textMuted },
   starTextActive: { color: C.gold },
-  saveBtn: { backgroundColor: C.gold, borderRadius: R.lg, padding: 16, alignItems: 'center', marginTop: 8 },
+  bottomBar: { padding: 16, paddingBottom: 8, backgroundColor: C.bg, borderTopWidth: 0.5, borderTopColor: C.borderMid },
+  saveBtn: { backgroundColor: C.gold, borderRadius: R.lg, padding: 16, alignItems: 'center' },
   saveBtnDisabled: { backgroundColor: C.card },
   saveBtnText: { fontFamily: 'DMSans_500Medium', fontSize: 15, color: C.bg },
   successCircle: { width: 56, height: 56, borderRadius: 28, backgroundColor: C.greenDim, borderWidth: 1.5, borderColor: C.green, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
