@@ -1,6 +1,6 @@
 import { useAuth } from '@clerk/clerk-expo'
 import { useRouter } from 'expo-router'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { createSession } from '../../lib/api'
@@ -13,6 +13,8 @@ export default function LogScreen() {
   const { getToken } = useAuth()
   const router = useRouter()
   const today = new Date().toISOString().split('T')[0]
+  const scrollRef = useRef(null)
+  const notesY = useRef(0)
 
   const [selectedRegion, setSelectedRegion] = useState('West Coast')
   const [form, setForm] = useState({ spot: '', date: today, waveHeight: '', duration: '', board: '', rating: 0, notes: '' })
@@ -66,8 +68,9 @@ export default function LogScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
       <ScrollView
+        ref={scrollRef}
         style={s.screen}
-        contentContainerStyle={[s.content, { paddingBottom: keyboardHeight > 0 ? keyboardHeight + 20 : 20 }]}
+        contentContainerStyle={[s.content, { paddingBottom: keyboardHeight > 0 ? keyboardHeight + 40 : 40 }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -135,7 +138,10 @@ export default function LogScreen() {
           ))}
         </View>
 
-        <Text style={s.label}>NOTES</Text>
+        <Text
+          style={s.label}
+          onLayout={e => { notesY.current = e.nativeEvent.layout.y }}
+        >NOTES</Text>
         <TextInput
           style={[s.input, { height: 90, textAlignVertical: 'top' }]}
           value={form.notes}
@@ -145,6 +151,7 @@ export default function LogScreen() {
           multiline
           returnKeyType="done"
           blurOnSubmit
+          onFocus={() => setTimeout(() => scrollRef.current?.scrollTo({ y: notesY.current - 20, animated: true }), 150)}
         />
 
         <TouchableOpacity style={[s.saveBtn, !canSave && s.saveBtnDisabled]} onPress={handleSave} disabled={!canSave || saving}>
